@@ -4,9 +4,9 @@
 use cortex_m_rt::entry;
 
 use rtt_target::{rprintln, rtt_init_print};
-use stm32f4xx_hal::{pac, prelude::*};
-use stm32f4xx_hal::gpio::Speed;
-use stm32f4xx_hal::spi::{Mode, Phase, Polarity};
+use stm32h7xx_hal::{pac, prelude::*};
+use stm32h7xx_hal::gpio::Speed;
+use stm32h7xx_hal::spi::{Mode, Phase, Polarity};
 
 #[allow(unused_imports)]
 use panic_halt as _;

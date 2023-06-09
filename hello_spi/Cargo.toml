@@ -8,4 +8,4 @@ cortex-m.workspace = true
 cortex-m-rt.workspace = true
 panic-halt.workspace = true
 rtt-target = { workspace = true, features = ["cortex-m"]  }
-stm32f4xx-hal = { workspace = true, features = ["rt", "stm32f446"] }
+stm32h7xx-hal = { workspace = true, features = ["rt", "stm32h7b3"] }

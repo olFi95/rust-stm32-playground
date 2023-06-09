@@ -2,37 +2,56 @@
 #![no_std]
 
 
-use stm32f4xx_hal::pac;
+use stm32h7xx_hal::{block, pac};
 use cortex_m_rt::entry;
 
 use panic_halt as _;
-use rtt_target::{rprintln, rtt_init_print};
+use rtt_target::{rprintln, rtt_init, rtt_init_print};
 
-use stm32f4xx_hal::prelude::*;
+use stm32h7xx_hal::prelude::*;
+use stm32h7xx_hal::time::MilliSeconds;
 
 
 #[entry]
 fn main() -> ! {
-
-    let device = pac::Peripherals::take().unwrap();
-    let core = cortex_m::Peripherals::take().unwrap();
-
     rtt_init_print!();
 
-    let mut sys_cfg = device.SYSCFG.constrain();
-    let rcc = device.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
+    let dp = pac::Peripherals::take().unwrap();
+    let pwr = dp.PWR.constrain();
 
-    let gpio_a = device.GPIOA.split();
+    let pwrcfg = pwr.vos1().freeze();
 
-    let mut led = gpio_a.pa5.into_push_pull_output();
-    let mut delay = device.TIM1.delay_us(&clocks);
+    let rcc = dp.RCC.constrain();
+    let ccdr = rcc
+        .sys_ck(192.MHz())
+        .pclk1(48.MHz())
+        .freeze(pwrcfg, &dp.SYSCFG);
+    let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
+    let gpioe = dp.GPIOE.split(ccdr.peripheral.GPIOE);
 
-    rprintln!("Starting to blink");
+    let mut ledGreen = gpiob.pb0.into_push_pull_output();
+    let mut ledYellow = gpioe.pe1.into_push_pull_output();
+    let mut ledRed = gpiob.pb14.into_push_pull_output();
+    let mut timer = dp.TIM2.timer(1.Hz(), ccdr.peripheral.TIM2, &ccdr.clocks);
 
+    rprintln!("Initialize all LEDs with low");
+    ledGreen.set_low();
+    ledYellow.set_low();
+    ledRed.set_low();
+
+    let timeout = MilliSeconds::from_ticks(200).into_rate();
     loop {
-        led.toggle();
-        delay.delay_ms(1000u32);
-        rprintln!("blink");
+        ledGreen.set_high();
+        timer.start(timeout);
+        block!(timer.wait()).ok();
+        ledGreen.set_low();
+        ledYellow.set_high();
+        timer.start(timeout);
+        block!(timer.wait()).ok();
+        ledYellow.set_low();
+        ledRed.set_high();
+        timer.start(timeout);
+        block!(timer.wait()).ok();
+        ledRed.set_low();
     }
 }
